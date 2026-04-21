@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}LibraryPro | Smart Library Management{% endblock %}
+
+{% block content %}
+<section class="container">
+    <div class="hero-glass p-4 p-md-5 mb-4">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <span class="badge text-bg-dark-subtle mb-3 px-3 py-2 rounded-pill">Modern Library Operations</span>
+                <h1 class="display-5 fw-bold mb-3 hero-title">Manage Your Library With Premium Simplicity</h1>
+                <p class="lead text-soft mb-4">Track books, issued records, student registrations, and overdue activity through a professional dashboard designed for modern institutions.</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="btn btn-neon btn-lg" href="{{ url_for('login_page') }}"><i class="fa-solid fa-right-to-bracket me-2"></i>Login</a>
+                    <a class="btn btn-outline-light btn-lg" href="{{ url_for('register_page') }}"><i class="fa-solid fa-user-plus me-2"></i>Register</a>
+                    <a class="btn btn-soft btn-lg" href="{{ url_for('dashboard_page') }}"><i class="fa-solid fa-chart-line me-2"></i>View Dashboard</a>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="glass-panel p-4 h-100">
+                    <h5 class="mb-3">Live Snapshot</h5>
+                    <div class="d-grid gap-2">
+                        <div class="d-flex justify-content-between"><span class="text-soft">Total Books</span><strong>{{ total_books }}</strong></div>
+                        <div class="d-flex justify-content-between"><span class="text-soft">Issued Books</span><strong>{{ issued_books }}</strong></div>
+                        <div class="d-flex justify-content-between"><span class="text-soft">Students Registered</span><strong>{{ students_registered }}</strong></div>
+                        <div class="d-flex justify-content-between"><span class="text-soft">Transactions</span><strong>{{ total_transactions }}</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="container mb-4">
+    <div class="row g-3">
+        <div class="col-md-6 col-xl-3">
+            <div class="glass-panel h-100 p-4">
+                <i class="fa-solid fa-book icon-chip mb-3"></i>
+                <h5>Book Inventory</h5>
+                <p class="text-soft mb-0">Track availability and catalog details in real time.</p>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="glass-panel h-100 p-4">
+                <i class="fa-solid fa-arrow-right-arrow-left icon-chip mb-3"></i>
+                <h5>Issue & Return</h5>
+                <p class="text-soft mb-0">Manage circulation flow with quick and clear actions.</p>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="glass-panel h-100 p-4">
+                <i class="fa-solid fa-user-graduate icon-chip mb-3"></i>
+                <h5>Student Records</h5>
+                <p class="text-soft mb-0">Maintain member data and borrowing insights efficiently.</p>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="glass-panel h-100 p-4">
+                <i class="fa-solid fa-clock icon-chip mb-3"></i>
+                <h5>Overdue Alerts</h5>
+                <p class="text-soft mb-0">Surface delays early and improve return compliance.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="container mb-4">
+    <div class="glass-panel p-4 p-md-5">
+        <div class="row g-4 align-items-center">
+            <div class="col-lg-6">
+                <h3 class="mb-3">Why Choose LibraryPro?</h3>
+                <ul class="feature-list">
+                    <li><i class="fa-solid fa-check"></i> Premium SaaS-inspired interface for better productivity</li>
+                    <li><i class="fa-solid fa-check"></i> End-to-end tracking for books, users, and transactions</li>
+                    <li><i class="fa-solid fa-check"></i> Built with Flask + Jinja for lightweight deployment</li>
+                    <li><i class="fa-solid fa-check"></i> Responsive design for desktop, tablet, and mobile staff use</li>
+                </ul>
+            </div>
+            <div class="col-lg-6">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="stat-counter glass-mini p-3 text-center">
+                            <h3 class="counter" data-target="{{ total_books }}">0</h3>
+                            <p class="mb-0 text-soft">Books</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-counter glass-mini p-3 text-center">
+                            <h3 class="counter" data-target="{{ students_registered }}">0</h3>
+                            <p class="mb-0 text-soft">Students</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-counter glass-mini p-3 text-center">
+                            <h3 class="counter" data-target="{{ issued_books }}">0</h3>
+                            <p class="mb-0 text-soft">Issued</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-counter glass-mini p-3 text-center">
+                            <h3 class="counter" data-target="{{ total_transactions }}">0</h3>
+                            <p class="mb-0 text-soft">Transactions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Issued Books | LibraryPro{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="glass-panel p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h2 class="mb-0">Issued / Return Transactions</h2>
+            <span class="badge rounded-pill text-bg-dark-subtle">{{ transactions|length }} Events</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-modern align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Book</th>
+                        <th>Type</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if transactions %}
+                        {% for txn in transactions %}
+                        <tr>
+                            <td>{{ txn.transaction_id }}</td>
+                            <td>{{ txn.user_id }}</td>
+                            <td>{{ txn.book_id }}</td>
+                            <td><span class="badge {% if txn.transaction_type.value == 'borrow' %}badge-soft-warning{% else %}badge-soft-success{% endif %}">{{ txn.transaction_type.value|upper }}</span></td>
+                            <td>{{ txn.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="5" class="text-center text-soft py-4">No transactions found.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

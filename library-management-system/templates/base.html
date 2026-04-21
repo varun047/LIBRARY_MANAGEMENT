@@ -3,196 +3,55 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Library Admin{% endblock %}</title>
+    <title>{% block title %}Library Management{% endblock %}</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet" crossorigin="anonymous" referrerpolicy="no-referrer">
-
-    <style>
-        :root {
-            --sidebar-width: 260px;
-            --nav-height: 64px;
-            --bg-main: #f4f7fb;
-            --sidebar-bg: #0f2343;
-            --sidebar-text: #d3def0;
-            --sidebar-active: #2f80ed;
-            --topbar-bg: #ffffff;
-            --border-color: #dfe6f2;
-            --text-main: #12233f;
-            --text-soft: #6b7b95;
-        }
-
-        body {
-            min-height: 100vh;
-            background: var(--bg-main);
-            color: var(--text-main);
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .sidebar {
-            position: fixed;
-            inset: 0 auto 0 0;
-            width: var(--sidebar-width);
-            background: linear-gradient(180deg, #0f2343 0%, #0b1b34 100%);
-            z-index: 1040;
-            border-right: 1px solid rgba(255, 255, 255, 0.06);
-            overflow-y: auto;
-        }
-
-        .brand {
-            height: var(--nav-height);
-            display: flex;
-            align-items: center;
-            padding: 0 1rem;
-            font-weight: 700;
-            color: #ffffff;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .sidebar .nav-link {
-            color: var(--sidebar-text);
-            border-radius: 0.5rem;
-            margin-bottom: 0.25rem;
-            padding: 0.65rem 0.75rem;
-        }
-
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            background: rgba(47, 128, 237, 0.22);
-            color: #ffffff;
-        }
-
-        .sidebar .nav-link i {
-            width: 1.25rem;
-        }
-
-        .page-wrap {
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .topbar {
-            height: var(--nav-height);
-            position: sticky;
-            top: 0;
-            z-index: 1030;
-            background: var(--topbar-bg);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 1rem;
-        }
-
-        .content {
-            flex: 1;
-            padding: 1.25rem;
-        }
-
-        .footer {
-            border-top: 1px solid var(--border-color);
-            background: #ffffff;
-            color: var(--text-soft);
-            padding: 0.9rem 1.25rem;
-            font-size: 0.9rem;
-        }
-
-        .stat-card {
-            border: 1px solid var(--border-color);
-            border-radius: 0.75rem;
-            background: #ffffff;
-            box-shadow: 0 8px 20px rgba(16, 34, 67, 0.04);
-        }
-
-        .mobile-sidebar .offcanvas-body {
-            background: #0f2343;
-        }
-
-        @media (max-width: 991.98px) {
-            .sidebar {
-                display: none;
-            }
-
-            .page-wrap {
-                margin-left: 0;
-            }
-        }
-    </style>
-
+    <link href="{{ url_for('static', filename='css/site.css') }}" rel="stylesheet">
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <aside class="sidebar d-none d-lg-block">
-        <div class="brand">
-            <i class="fa-solid fa-book-open-reader me-2"></i>
-            Library Admin
-        </div>
-        <nav class="p-3">
-            <a class="nav-link active" href="/">
-                <i class="fa-solid fa-gauge-high me-2"></i> Dashboard
-            </a>
-            <a class="nav-link" href="/books">
-                <i class="fa-solid fa-book me-2"></i> Books
-            </a>
-            <a class="nav-link" href="/users">
-                <i class="fa-solid fa-users me-2"></i> Users
-            </a>
-            <a class="nav-link" href="/transactions">
-                <i class="fa-solid fa-arrow-right-arrow-left me-2"></i> Issued Books
-            </a>
-        </nav>
-    </aside>
+<body class="{% block body_class %}{% endblock %}">
+    <div class="site-bg-glow"></div>
 
-    <div class="offcanvas offcanvas-start mobile-sidebar" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
-        <div class="offcanvas-header border-bottom bg-white">
-            <h5 class="offcanvas-title" id="mobileSidebarLabel">
-                <i class="fa-solid fa-book-open-reader me-2"></i>Library Admin
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-        <div class="offcanvas-body">
-            <a class="nav-link active" href="/">
-                <i class="fa-solid fa-gauge-high me-2"></i> Dashboard
+    <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
+        <div class="container">
+            <a class="navbar-brand brand-mark" href="{{ url_for('home_page') }}">
+                <i class="fa-solid fa-book-open-reader me-2"></i>
+                LibraryPro
             </a>
-            <a class="nav-link" href="/books">
-                <i class="fa-solid fa-book me-2"></i> Books
-            </a>
-            <a class="nav-link" href="/users">
-                <i class="fa-solid fa-users me-2"></i> Users
-            </a>
-            <a class="nav-link" href="/transactions">
-                <i class="fa-solid fa-arrow-right-arrow-left me-2"></i> Issued Books
-            </a>
-        </div>
-    </div>
-
-    <div class="page-wrap">
-        <header class="topbar">
-            <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-outline-secondary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-                <span class="fw-semibold">Admin Dashboard</span>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center gap-lg-1">
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'home_page' %}active{% endif %}" href="{{ url_for('home_page') }}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'dashboard_page' %}active{% endif %}" href="{{ url_for('dashboard_page') }}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'books_page' %}active{% endif %}" href="{{ url_for('books_page') }}">Books</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'users_page' %}active{% endif %}" href="{{ url_for('users_page') }}">Students</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'transactions_page' %}active{% endif %}" href="{{ url_for('transactions_page') }}">Issued</a></li>
+                    <li class="nav-item ms-lg-2 mt-2 mt-lg-0"><a class="btn btn-sm btn-outline-light nav-pill {% if request.endpoint == 'register_page' %}active-auth{% endif %}" href="{{ url_for('register_page') }}"><i class="fa-solid fa-user-plus me-1"></i>Register</a></li>
+                    <li class="nav-item ms-lg-2 mt-2 mt-lg-0"><a class="btn btn-sm btn-neon nav-pill {% if request.endpoint == 'login_page' %}active-auth{% endif %}" href="{{ url_for('login_page') }}"><i class="fa-solid fa-right-to-bracket me-1"></i>Login</a></li>
+                </ul>
             </div>
-            <div class="d-flex align-items-center gap-3 text-secondary">
-                <i class="fa-regular fa-bell"></i>
-                <i class="fa-regular fa-circle-user fa-lg"></i>
-            </div>
-        </header>
+        </div>
+    </nav>
 
-        <main class="content">
-            {% block content %}{% endblock %}
-        </main>
+    <main class="py-4">
+        {% block content %}{% endblock %}
+    </main>
 
-        <footer class="footer d-flex justify-content-between flex-wrap gap-2">
-            <span>Library Management System</span>
-            <span>Admin Panel</span>
-        </footer>
-    </div>
+    <footer class="app-footer mt-4">
+        <div class="container py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+            <span>LibraryPro Management System</span>
+            <span class="text-soft">Flask + Jinja Professional UI</span>
+        </div>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/site.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

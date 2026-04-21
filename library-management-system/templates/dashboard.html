@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | LibraryPro{% endblock %}
+
+{% block content %}
+<div class="container fade-in-up">
+    <div class="hero-glass p-4 p-md-5 mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h2 class="mb-2">Admin Dashboard</h2>
+                <p class="text-soft mb-0">Monitor inventory, circulation, registrations, and overdue performance.</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a class="btn btn-neon" href="{{ url_for('books_page') }}"><i class="fa-solid fa-plus me-1"></i>Manage Books</a>
+                <a class="btn btn-soft" href="{{ url_for('transactions_page') }}"><i class="fa-solid fa-arrow-right-arrow-left me-1"></i>Issued Records</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="glass-panel p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-soft mb-1">Total Books</p>
+                        <h3 class="mb-0">{{ total_books }}</h3>
+                    </div>
+                    <i class="fa-solid fa-book icon-chip"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="glass-panel p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-soft mb-1">Issued Books</p>
+                        <h3 class="mb-0">{{ issued_books }}</h3>
+                    </div>
+                    <i class="fa-solid fa-book-open icon-chip"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="glass-panel p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-soft mb-1">Students Registered</p>
+                        <h3 class="mb-0">{{ students_registered }}</h3>
+                    </div>
+                    <i class="fa-solid fa-user-graduate icon-chip"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="glass-panel p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-soft mb-1">Overdue Books</p>
+                        <h3 class="mb-0">{{ overdue_books }}</h3>
+                    </div>
+                    <i class="fa-solid fa-clock icon-chip"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-xl-8">
+            <div class="glass-panel p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">Recent Issued Books</h4>
+                    <a class="btn btn-sm btn-soft" href="{{ url_for('transactions_page') }}">View All</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-modern align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Book</th>
+                                <th>Student</th>
+                                <th>Issued Date</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if recent_issued_books %}
+                                {% for item in recent_issued_books %}
+                                <tr>
+                                    <td>{{ item.book_title }}</td>
+                                    <td>{{ item.student_name }}</td>
+                                    <td>{{ item.issued_date }}</td>
+                                    <td>{{ item.due_date }}</td>
+                                    <td>
+                                        <span class="badge {% if item.status == 'Overdue' %}badge-soft-warning{% else %}badge-soft-success{% endif %}">{{ item.status }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="5" class="text-center text-soft py-4">No recent issued books available.</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="glass-panel p-4 h-100">
+                <h4 class="mb-3">Quick Actions</h4>
+                <div class="d-grid gap-2">
+                    <a class="btn btn-soft text-start" href="{{ url_for('books_page') }}"><i class="fa-solid fa-plus me-2"></i>Add / Manage Books</a>
+                    <a class="btn btn-soft text-start" href="{{ url_for('users_page') }}"><i class="fa-solid fa-users me-2"></i>View Students</a>
+                    <a class="btn btn-soft text-start" href="{{ url_for('register_page') }}"><i class="fa-solid fa-user-plus me-2"></i>Register New Student</a>
+                    <a class="btn btn-soft text-start" href="{{ url_for('transactions_page') }}"><i class="fa-solid fa-arrow-right-arrow-left me-2"></i>Issue / Return Records</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

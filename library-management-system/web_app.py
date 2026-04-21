@@ -1,13 +1,14 @@
 """Flask web application for Library Management System."""
+import re
 from pathlib import Path
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, render_template, redirect, url_for
 from flask_cors import CORS
 from app import LibraryManagementSystem
 
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIST = BASE_DIR / 'frontend' / 'dist'
 
-app = Flask(__name__, static_folder=str(FRONTEND_DIST), static_url_path='')
+app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
 
 # Initialize the library system
@@ -19,6 +20,147 @@ def get_request_data() -> dict:
     if request.is_json:
         return request.get_json(silent=True) or {}
     return request.form.to_dict() if request.form else {}
+
+
+def build_dashboard_context() -> dict:
+    """Prepare dashboard data for Jinja templates."""
+    stats = lms.get_library_statistics()
+    recent = list(lms.transactions)[-8:]
+
+    recent_issued_books = []
+    for txn in reversed(recent):
+        user = lms.user_manager.get_user(txn.user_id)
+        book = lms.book_manager.get_book(txn.book_id) if txn.book_id else None
+        status = 'Overdue' if txn.transaction_type.value == 'borrow' and txn.is_overdue() else 'Issued'
+        recent_issued_books.append({
+            'book_id': txn.book_id,
+            'book_title': book.title if book else txn.book_id,
+            'user_id': txn.user_id,
+            'student_name': user.name if user else txn.user_id,
+            'issued_date': txn.timestamp.strftime('%Y-%m-%d'),
+            'due_date': txn.due_date.strftime('%Y-%m-%d') if txn.due_date else '-',
+            'status': status
+        })
+
+    overdue_books = sum(
+        1 for txn in lms.transactions
+        if txn.transaction_type.value == 'borrow' and txn.is_overdue()
+    )
+
+    return {
+        'total_books': stats.get('total_books_unique', 0),
+        'issued_books': stats.get('borrowed_copies', 0),
+        'students_registered': stats.get('registered_users', 0),
+        'overdue_books': overdue_books,
+        'recent_issued_books': recent_issued_books
+    }
+
+
+def prefers_json() -> bool:
+    """Return True when the current request expects a JSON response."""
+    if request.path.startswith('/api'):
+        return True
+    best = request.accept_mimetypes.best_match(['application/json', 'text/html'])
+    return best == 'application/json' and request.accept_mimetypes[best] > request.accept_mimetypes['text/html']
+
+
+def validate_registration_form(form: dict) -> str:
+    """Validate registration payload and return an error message when invalid."""
+    user_id = form.get('user_id', '').strip()
+    name = form.get('name', '').strip()
+    email = form.get('email', '').strip()
+    phone = form.get('phone', '').strip()
+
+    if not user_id or not name or not email or not phone:
+        return 'All fields are required.'
+    if len(user_id) < 3:
+        return 'User ID must be at least 3 characters.'
+    if len(name) < 2:
+        return 'Full name must be at least 2 characters.'
+    if not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', email):
+        return 'Please enter a valid email address.'
+    if not re.fullmatch(r'[0-9+\-()\s]{7,20}', phone):
+        return 'Please enter a valid phone number.'
+    return ''
+
+
+# ===== FLASK PAGES =====
+@app.route('/', methods=['GET'])
+def home_page():
+    """Render marketing-style home page."""
+    stats = lms.get_library_statistics()
+    return render_template(
+        'home.html',
+        total_books=stats.get('total_books_unique', 0),
+        issued_books=stats.get('borrowed_copies', 0),
+        students_registered=stats.get('registered_users', 0),
+        total_transactions=stats.get('total_transactions', 0)
+    )
+
+
+@app.route('/dashboard', methods=['GET'])
+def dashboard_page():
+    """Render admin dashboard page."""
+    return render_template('dashboard.html', **build_dashboard_context())
+
+
+@app.route('/books', methods=['GET'])
+def books_page():
+    """Render books page."""
+    books = lms.book_manager.get_all_books()
+    return render_template('books.html', books=books)
+
+
+@app.route('/users', methods=['GET'])
+def users_page():
+    """Render users page."""
+    users = lms.user_manager.get_all_users()
+    return render_template('users.html', users=users)
+
+
+@app.route('/transactions', methods=['GET'])
+def transactions_page():
+    """Render transactions page."""
+    return render_template('transactions.html', transactions=list(reversed(lms.transactions)))
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register_page():
+    """Render register page and handle simple user registration."""
+    success_message = ''
+    error_message = ''
+    form_values = {'user_id': '', 'name': '', 'email': '', 'phone': ''}
+
+    if request.method == 'POST':
+        form_values = {
+            'user_id': request.form.get('user_id', '').strip(),
+            'name': request.form.get('name', '').strip(),
+            'email': request.form.get('email', '').strip(),
+            'phone': request.form.get('phone', '').strip(),
+        }
+        error_message = validate_registration_form(form_values)
+        if not error_message:
+            try:
+                success = lms.register_user(
+                    form_values['user_id'],
+                    form_values['name'],
+                    form_values['email'],
+                    form_values['phone']
+                )
+                if success:
+                    success_message = 'Registration successful. You can now login.'
+                    form_values = {'user_id': '', 'name': '', 'email': '', 'phone': ''}
+                else:
+                    error_message = 'User ID already exists.'
+            except Exception as exc:
+                error_message = f'Failed to register user: {exc}'
+
+    return render_template(
+        'register.html',
+        success_message=success_message,
+        error_message=error_message,
+        form_values=form_values
+    )
 
 
 # ===== BOOK ENDPOINTS =====
@@ -249,10 +391,32 @@ def api_index():
     })
 
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
+@app.route('/login', methods=['GET', 'POST'])
+def login_page():
+    """Render login page and handle basic form submission."""
+    error_message = ''
+    identity_value = ''
+
+    if request.method == 'POST':
+        identity = request.form.get('identity', '').strip()
+        password = request.form.get('password', '').strip()
+        identity_value = identity
+
+        if not identity or not password:
+            error_message = 'Please enter email/username and password.'
+        elif len(password) < 4:
+            error_message = 'Password must be at least 4 characters.'
+        else:
+            # Placeholder authentication flow; replace with real auth later.
+            return redirect(url_for('dashboard_page'))
+
+    return render_template('login.html', error_message=error_message, identity_value=identity_value)
+
+
+@app.route('/app', defaults={'path': ''})
+@app.route('/app/<path:path>')
 def serve_react_app(path):
-    """Serve React SPA (production build) when available."""
+    """Serve React SPA bundle under /app when available."""
     if path.startswith('api'):
         return jsonify({'error': 'Endpoint not found'}), 404
 
@@ -273,13 +437,17 @@ def serve_react_app(path):
 @app.errorhandler(404)
 def not_found(error):
     """Handle 404 errors."""
-    return jsonify({'error': 'Endpoint not found'}), 404
+    if prefers_json():
+        return jsonify({'error': 'Endpoint not found'}), 404
+    return render_template('404.html'), 404
 
 
 @app.errorhandler(500)
 def internal_error(error):
     """Handle 500 errors."""
-    return jsonify({'error': 'Internal server error'}), 500
+    if prefers_json():
+        return jsonify({'error': 'Internal server error'}), 500
+    return render_template('500.html'), 500
 
 
 if __name__ == '__main__':
@@ -288,7 +456,10 @@ if __name__ == '__main__':
     print("=" * 60)
     print("Starting Flask server on http://localhost:5000")
     print("\nAPI Documentation:")
-    print("  GET  /              - React frontend (after build)")
+    print("  GET  /              - Flask home page")
+    print("  GET  /login         - Login page")
+    print("  GET  /dashboard     - Admin dashboard")
+    print("  GET  /app           - React frontend (optional)")
     print("  GET  /api           - API info")
     print("  GET  /api/health    - Health check")
     print("  POST /api/books     - Add book")
