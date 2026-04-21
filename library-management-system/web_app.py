@@ -1,29 +1,41 @@
 """Flask web application for Library Management System."""
-from flask import Flask, request, jsonify
+from pathlib import Path
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from app import LibraryManagementSystem
 
-app = Flask(__name__)
+BASE_DIR = Path(__file__).resolve().parent
+FRONTEND_DIST = BASE_DIR / 'frontend' / 'dist'
+
+app = Flask(__name__, static_folder=str(FRONTEND_DIST), static_url_path='')
 CORS(app)
 
 # Initialize the library system
 lms = LibraryManagementSystem()
 
 
+def get_request_data() -> dict:
+    """Return JSON body or form payload as a dictionary."""
+    if request.is_json:
+        return request.get_json(silent=True) or {}
+    return request.form.to_dict() if request.form else {}
+
+
 # ===== BOOK ENDPOINTS =====
 @app.route('/api/books', methods=['POST'])
+@app.route('/books', methods=['POST'])
 def add_book():
     """Add a new book."""
     try:
-        data = request.json
+        data = get_request_data()
         success = lms.add_book(
             data['book_id'],
             data['title'],
             data['author'],
             data['isbn'],
-            data['publication_year'],
-            data.get('copies_available', 1),
-            data.get('copies_total', 1)
+            int(data['publication_year']),
+            int(data.get('copies_available', 1)),
+            int(data.get('copies_total', 1))
         )
         return jsonify({
             'success': success,
@@ -105,10 +117,11 @@ def delete_book(book_id):
 
 # ===== USER ENDPOINTS =====
 @app.route('/api/users', methods=['POST'])
+@app.route('/users', methods=['POST'])
 def register_user():
     """Register a new user."""
     try:
-        data = request.json
+        data = get_request_data()
         success = lms.register_user(
             data['user_id'],
             data['name'],
@@ -158,10 +171,11 @@ def delete_user(user_id):
 
 # ===== BORROWING ENDPOINTS =====
 @app.route('/api/borrow', methods=['POST'])
+@app.route('/borrow', methods=['POST'])
 def borrow_book():
     """Borrow a book."""
     try:
-        data = request.json
+        data = get_request_data()
         success = lms.borrow_book(data['user_id'], data['book_id'])
         return jsonify({
             'success': success,
@@ -172,10 +186,11 @@ def borrow_book():
 
 
 @app.route('/api/return', methods=['POST'])
+@app.route('/return', methods=['POST'])
 def return_book():
     """Return a book."""
     try:
-        data = request.json
+        data = get_request_data()
         success = lms.return_book(data['user_id'], data['book_id'])
         return jsonify({
             'success': success,
@@ -213,20 +228,44 @@ def health():
     return jsonify({'status': 'healthy', 'service': 'Library Management System'})
 
 
-@app.route('/', methods=['GET'])
-def index():
+@app.route('/api', methods=['GET'])
+def api_index():
     """API information."""
     return jsonify({
         'service': 'Library Management System API',
         'version': '1.0.0',
         'endpoints': {
             'books': '/api/books',
+            'books_alias': '/books',
             'users': '/api/users',
+            'users_alias': '/users',
             'borrow': '/api/borrow',
+            'borrow_alias': '/borrow',
             'return': '/api/return',
+            'return_alias': '/return',
             'statistics': '/api/statistics',
             'health': '/api/health'
         }
+    })
+
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react_app(path):
+    """Serve React SPA (production build) when available."""
+    if path.startswith('api'):
+        return jsonify({'error': 'Endpoint not found'}), 404
+
+    if FRONTEND_DIST.exists():
+        target = FRONTEND_DIST / path
+        if path and target.exists() and target.is_file():
+            return send_from_directory(str(FRONTEND_DIST), path)
+        return send_from_directory(str(FRONTEND_DIST), 'index.html')
+
+    return jsonify({
+        'service': 'Library Management System API',
+        'frontend': 'React app not built yet',
+        'hint': 'Run: cd frontend && npm install && npm run build'
     })
 
 
@@ -249,15 +288,20 @@ if __name__ == '__main__':
     print("=" * 60)
     print("Starting Flask server on http://localhost:5000")
     print("\nAPI Documentation:")
-    print("  GET  /              - API info")
+    print("  GET  /              - React frontend (after build)")
+    print("  GET  /api           - API info")
     print("  GET  /api/health    - Health check")
     print("  POST /api/books     - Add book")
+    print("  POST /books         - Add book (alias)")
     print("  GET  /api/books     - Get all books")
     print("  GET  /api/books/<id> - Get book by ID")
     print("  POST /api/users     - Register user")
+    print("  POST /users         - Register user (alias)")
     print("  GET  /api/users     - Get all users")
     print("  POST /api/borrow    - Borrow book")
+    print("  POST /borrow        - Borrow book (alias)")
     print("  POST /api/return    - Return book")
+    print("  POST /return        - Return book (alias)")
     print("  GET  /api/statistics - Library stats")
     print("=" * 60)
     app.run(debug=True, port=5000, host='0.0.0.0')

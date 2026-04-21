@@ -72,14 +72,35 @@ python app.py
 
 This runs a sample workflow demonstrating all core functionality.
 
-### Option 2: REST API Mode (Web Server)
+### Option 2: REST API + React Frontend
 
 Start the Flask development server:
 ```bash
 python web_app.py
 ```
 
-Server runs at `http://localhost:5000`
+Start the React frontend in a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend runs at `http://localhost:5173`
+
+Flask API runs at `http://localhost:5000`
+
+For production-style serving from Flask:
+
+```bash
+cd frontend
+npm run build
+cd ..
+python web_app.py
+```
+
+Then open `http://localhost:5000`.
 
 See [API_GUIDE.md](API_GUIDE.md) for complete API documentation.
 
@@ -184,7 +205,7 @@ Configuration can be adjusted in individual module files:
 
 ## Future Enhancements
 
-- [ ] Web interface with Flask
+- [ ] React forms for add/delete book and user operations
 - [ ] Email notifications for due dates
 - [ ] Advanced search and filtering
 - [ ] Bulk import/export functionality
