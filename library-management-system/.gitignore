@@ -132,3 +132,10 @@ dmypy.json
 library_data.json
 *.db
 *.sqlite
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Local virtual environments
+.proooo/
