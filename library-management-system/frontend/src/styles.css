@@ -272,6 +272,18 @@ li,
   border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
 }
 
+.side-link.iridescent.shine {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--accent));
+  box-shadow:
+    0 14px 28px color-mix(in srgb, var(--shadow) 70%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--primary) 24%, transparent) inset;
+}
+
+.side-link.iridescent.shine .drop-shadow {
+  opacity: 0.9;
+  filter: blur(12px);
+}
+
 .side-link.iridescent.active {
   border-color: color-mix(in srgb, var(--sidebar-active) 40%, var(--border));
   background:

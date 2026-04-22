@@ -1,4 +1,5 @@
 """Flask web application for Library Management System."""
+import os
 import re
 from functools import wraps
 from pathlib import Path
@@ -11,7 +12,28 @@ FRONTEND_DIST = BASE_DIR / 'frontend' / 'dist'
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['SECRET_KEY'] = 'librarypro-dev-secret-key'
-CORS(app)
+
+# Comma-separated allow-list. Example:
+# CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+cors_allowed_origins = [
+    origin.strip() for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if origin.strip()
+]
+if not cors_allowed_origins:
+    cors_allowed_origins = [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000'
+    ]
+
+CORS(
+    app,
+    resources={r"/*": {"origins": cors_allowed_origins}},
+    supports_credentials=True,
+    methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
+    expose_headers=['Content-Type']
+)
 
 # Initialize the library system
 lms = LibraryManagementSystem()
@@ -608,6 +630,15 @@ def serve_react_app(path):
         'frontend': 'React app not built yet',
         'hint': 'Run: cd frontend && npm install && npm run build'
     })
+
+
+@app.route('/assets/<path:path>')
+def serve_react_assets(path):
+    """Serve built React static assets for /app entry."""
+    assets_dir = FRONTEND_DIST / 'assets'
+    if assets_dir.exists():
+        return send_from_directory(str(assets_dir), path)
+    return jsonify({'error': 'Frontend assets not found'}), 404
 
 
 # Error handler

@@ -1,135 +1,133 @@
-import { NavLink } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import '@theme-toggles/react/css/Classic.css';
-import { Classic } from '@theme-toggles/react';
+import { useState } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
+import ThemeToggle from './ThemeToggle.jsx';
 
-const navItems = [
-  { to: '/', label: 'Dashboard', icon: 'bi-speedometer2' },
-  { to: '/books', label: 'Books', icon: 'bi-book' },
-  { to: '/users', label: 'Users', icon: 'bi-people' },
-  { to: '/transactions', label: 'Issued Books', icon: 'bi-arrow-left-right' }
-];
-
-export default function Layout({ title, subtitle, children }) {
+export default function Layout({ children, activePage = 'home' }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [theme, setTheme] = useState(() => {
-    const stored = localStorage.getItem('lms-theme');
-    if (stored === 'light' || stored === 'dark') {
-      return stored;
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('lms-theme', theme);
-  }, [theme]);
-
-  function toggleTheme() {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  async function handleLogout() {
+    await logout();
+    navigate('/login');
   }
 
   return (
-    <div className="app-shell">
-      <div className="app-bg" />
+    <>
+      <div className="site-bg-glow" />
 
-      <aside className="sidebar-shell d-none d-lg-flex">
-        <div className="sidebar-brand">
-          <span className="brand-dot" />
-          <div>
-            <h1 className="brand-title mb-0">LibrarySaaS</h1>
-            <p className="brand-subtext mb-0">Education Suite</p>
-          </div>
-        </div>
-
-        <nav className="sidebar-links">{navItems.map(renderNav)}</nav>
-
-        <div className="sidebar-footer">
-          <span className="status-pill">
-            <i className="bi bi-shield-check me-1" />
-            Secure API Connected
-          </span>
-        </div>
-      </aside>
-
-      {mobileOpen && (
-        <div className="mobile-overlay d-lg-none" onClick={() => setMobileOpen(false)}>
-          <aside className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
-            <div className="sidebar-brand px-3 pt-3">
-              <span className="brand-dot" />
-              <div>
-                <h2 className="brand-title mb-0">LibrarySaaS</h2>
-                <p className="brand-subtext mb-0">Education Suite</p>
-              </div>
-            </div>
-            <nav className="sidebar-links p-3">{navItems.map((item) => renderNav(item, () => setMobileOpen(false)))}</nav>
-          </aside>
-        </div>
-      )}
-
-      <main className="app-content">
-        <header className="top-nav glass-card fluid-card top-nav-card">
+      <nav className="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
+        <div className="container">
+          <Link className="navbar-brand brand-mark" to="/">
+            <i className="fa-solid fa-book-open-reader me-2" />
+            LibraryPro
+          </Link>
           <button
-            className="btn btn-icon d-lg-none"
-            onClick={() => setMobileOpen(!mobileOpen)}
+            className="navbar-toggler"
+            type="button"
             aria-label="Toggle navigation"
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen((prev) => !prev)}
           >
-            <i className="bi bi-list" />
+            <span className="navbar-toggler-icon" />
           </button>
-
-          <div className="search-wrap ms-0 ms-lg-2 flex-grow-1">
-            <i className="bi bi-search" />
-            <input className="form-control" placeholder="Search books, users, transactions..." />
+          <div className={`navbar-collapse ${mobileOpen ? 'd-block mt-2' : 'd-none d-lg-block'}`}>
+            <ul className="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center gap-lg-1">
+              <li className="nav-item">
+                <NavLink className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} to="/">
+                  Home
+                </NavLink>
+              </li>
+              {isAuthenticated && (
+                <>
+                  <li className="nav-item">
+                    <NavLink className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} to="/dashboard">
+                      Dashboard
+                    </NavLink>
+                  </li>
+                  <li className="nav-item">
+                    <NavLink className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} to="/books">
+                      Books
+                    </NavLink>
+                  </li>
+                  <li className="nav-item">
+                    <NavLink className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} to="/users">
+                      Students
+                    </NavLink>
+                  </li>
+                  <li className="nav-item">
+                    <NavLink className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} to="/transactions">
+                      Issued
+                    </NavLink>
+                  </li>
+                  <li className="nav-item ms-lg-2 mt-2 mt-lg-0">
+                    <span className="badge rounded-pill text-bg-dark-subtle px-3 py-2">{(user || 'ADMIN').toUpperCase()}</span>
+                  </li>
+                  <li className="nav-item ms-lg-2 mt-2 mt-lg-0">
+                    <button className="btn btn-sm btn-outline-light nav-pill" type="button" onClick={handleLogout}>
+                      <i className="fa-solid fa-right-from-bracket me-1" />
+                      Logout
+                    </button>
+                  </li>
+                </>
+              )}
+              {!isAuthenticated && (
+                <>
+                  <li className="nav-item ms-lg-2 mt-2 mt-lg-0">
+                    <Link className="btn btn-sm btn-outline-light nav-pill" to="/register">
+                      <i className="fa-solid fa-user-plus me-1" />
+                      Register
+                    </Link>
+                  </li>
+                  <li className="nav-item ms-lg-2 mt-2 mt-lg-0">
+                    <Link className="btn btn-sm btn-neon nav-pill" to="/login">
+                      <i className="fa-solid fa-right-to-bracket me-1" />
+                      Login
+                    </Link>
+                  </li>
+                </>
+              )}
+            </ul>
           </div>
+        </div>
+      </nav>
 
-          <div className="top-actions">
-            <Classic
-              className="theme-toggle-react"
-              duration={750}
-              aria-label="Toggle theme"
-              title="Toggle theme"
-              toggled={theme === 'dark'}
-              toggle={() => toggleTheme()}
-            />
-            <button className="btn btn-icon-soft" aria-label="Notifications">
-              <i className="bi bi-bell" />
-            </button>
-            <span className="avatar-chip">AD</span>
+      <div className="container mt-3">
+        <div className="topbar-shell">
+          <div className="topbar-icon">
+            <ThemeToggle />
           </div>
-        </header>
+          <nav className="topbar-nav" aria-label="Secondary navigation">
+            <NavLink className={({ isActive }) => `topbar-link ${isActive || activePage === 'home' ? 'active' : ''}`} to="/">
+              Overview
+            </NavLink>
+            {isAuthenticated && (
+              <>
+                <NavLink className={({ isActive }) => `topbar-link ${isActive ? 'active' : ''}`} to="/books">
+                  Catalog
+                </NavLink>
+                <NavLink className={({ isActive }) => `topbar-link ${isActive ? 'active' : ''}`} to="/users">
+                  Students
+                </NavLink>
+                <NavLink className={({ isActive }) => `topbar-link ${isActive ? 'active' : ''}`} to="/transactions">
+                  Circulation
+                </NavLink>
+              </>
+            )}
+          </nav>
+          <div className="topbar-actions" />
+        </div>
+      </div>
 
-        <section className="content-inner">
-          <div className="page-title-wrap">
-            <h2 className="section-title">{title}</h2>
-            <p className="section-subtitle mb-0">{subtitle}</p>
-          </div>
+      <main className="py-4">{children}</main>
 
-          {children}
-        </section>
-
-        <footer className="app-footer px-4 py-3">
-          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
-            <small className="text-muted">Library Management SaaS Panel</small>
-            <small className="text-muted">React (Vite) frontend + Flask API backend</small>
-          </div>
-        </footer>
-      </main>
-    </div>
-  );
-}
-
-function renderNav(item, onClick) {
-  return (
-    <NavLink
-      key={item.to}
-      to={item.to}
-      end={item.to === '/'}
-      onClick={onClick}
-      className={({ isActive }) => `side-link iridescent ${isActive ? 'active' : ''}`}
-    >
-      <span className="drop-shadow" aria-hidden="true" />
-      <i className={`bi ${item.icon}`} />
-      <span>{item.label}</span>
-    </NavLink>
+      <footer className="app-footer mt-4">
+        <div className="container py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+          <span>LibraryPro Management System</span>
+          <span className="text-soft">React Frontend + Flask API</span>
+        </div>
+      </footer>
+    </>
   );
 }

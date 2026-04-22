@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
-import DataTable from '../components/DataTable';
-import SearchBar from '../components/SearchBar';
-import { borrowBook, fetchTransactions, returnBook } from '../lib/api.js';
+import { borrowBook, fetchTransactions, returnBook } from '../services/api.js';
+import { fetchBooks, fetchUsers } from '../services/api.js';
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
@@ -11,6 +10,9 @@ export default function TransactionsPage() {
   const [success, setSuccess] = useState('');
   const [borrowForm, setBorrowForm] = useState({ user_id: '', book_id: '' });
   const [returnForm, setReturnForm] = useState({ user_id: '', book_id: '' });
+  const [action, setAction] = useState('borrow');
+  const [users, setUsers] = useState([]);
+  const [books, setBooks] = useState([]);
 
   function loadTransactions() {
     fetchTransactions()
@@ -20,6 +22,8 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     loadTransactions();
+    fetchUsers().then(setUsers).catch(() => undefined);
+    fetchBooks().then(setBooks).catch(() => undefined);
   }, []);
 
   async function handleBorrow(event) {
@@ -68,102 +72,81 @@ export default function TransactionsPage() {
     );
   }, [transactions, query]);
 
-  const columns = [
-    { key: 'transaction_id', label: 'Txn ID' },
-    { key: 'user_id', label: 'User ID' },
-    { key: 'book_id', label: 'Book ID' },
-    {
-      key: 'type',
-      label: 'Type',
-      render: (value) => <span className="badge badge-soft text-uppercase">{value}</span>
-    },
-    {
-      key: 'timestamp',
-      label: 'Timestamp',
-      render: (value) => new Date(value).toLocaleString()
-    }
-  ];
-
   return (
-    <Layout title="Issued Books" subtitle="Borrow and return transaction timeline.">
-      {error && <div className="alert alert-danger">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
-
-      <section className="glass-card fluid-card welcome-banner mb-4">
-        <div>
-          <p className="banner-eyebrow mb-2">Circulation Operations</p>
-          <h3 className="banner-title mb-2">Track Every Borrow and Return</h3>
-          <p className="banner-text mb-0">
-            Process issue/return operations instantly and maintain a reliable activity timeline.
-          </p>
-        </div>
-        <div className="d-flex align-items-center gap-2 flex-wrap">
-          <span className="badge text-bg-light border">Total Transactions: {transactions.length}</span>
-          <span className="badge text-bg-light border">Filtered: {filtered.length}</span>
-        </div>
-      </section>
-
-      <section className="row g-3 mb-4">
-        <div className="col-12 col-lg-6">
-          <div className="card-elevated p-3 p-md-4 h-100">
-            <div className="panel-header">
-              <div>
-                <h3 className="h5 mb-1">Borrow Book</h3>
-                <p className="text-muted mb-0">Issue a book to a registered user.</p>
-              </div>
+    <Layout activePage="transactions">
+      <div className="container">
+        <div className="glass-panel p-4 mb-4">
+          <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h2 className="mb-0">Issue / Return Book</h2>
+            <span className="text-soft">Perform circulation actions directly from this page</span>
+          </div>
+          {success && <div className="alert alert-success">{success}</div>}
+          {error && <div className="alert alert-danger">{error}</div>}
+          <form
+            className="row g-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (action === 'borrow') {
+                handleBorrow(e);
+              } else {
+                handleReturn(e);
+              }
+            }}
+          >
+            <div className="col-md-3">
+              <label className="form-label">Action</label>
+              <select className="form-select form-control-modern" value={action} onChange={(e) => setAction(e.target.value)}>
+                <option value="borrow">Borrow</option>
+                <option value="return">Return</option>
+              </select>
             </div>
-            <form className="row g-3" onSubmit={handleBorrow}>
-              <div className="col-12">
-                <input className="form-control" placeholder="User ID" value={borrowForm.user_id} onChange={(e) => setBorrowForm({ ...borrowForm, user_id: e.target.value })} required />
-              </div>
-              <div className="col-12">
-                <input className="form-control" placeholder="Book ID" value={borrowForm.book_id} onChange={(e) => setBorrowForm({ ...borrowForm, book_id: e.target.value })} required />
-              </div>
-              <div className="col-12">
-                <button className="btn btn-primary" type="submit">
-                  <i className="bi bi-journal-arrow-up me-1" />
-                  Borrow
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-        <div className="col-12 col-lg-6">
-          <div className="card-elevated p-3 p-md-4 h-100">
-            <div className="panel-header">
-              <div>
-                <h3 className="h5 mb-1">Return Book</h3>
-                <p className="text-muted mb-0">Complete return flow for issued books.</p>
-              </div>
+            <div className="col-md-4">
+              <label className="form-label">Student</label>
+              <select className="form-select form-control-modern" value={borrowForm.user_id} onChange={(e) => { setBorrowForm({ ...borrowForm, user_id: e.target.value }); setReturnForm({ ...returnForm, user_id: e.target.value }); }} required>
+                <option value="">Select student</option>
+                {users.map((u) => <option key={u.user_id} value={u.user_id}>{u.user_id} - {u.name}</option>)}
+              </select>
             </div>
-            <form className="row g-3" onSubmit={handleReturn}>
-              <div className="col-12">
-                <input className="form-control" placeholder="User ID" value={returnForm.user_id} onChange={(e) => setReturnForm({ ...returnForm, user_id: e.target.value })} required />
-              </div>
-              <div className="col-12">
-                <input className="form-control" placeholder="Book ID" value={returnForm.book_id} onChange={(e) => setReturnForm({ ...returnForm, book_id: e.target.value })} required />
-              </div>
-              <div className="col-12">
-                <button className="btn btn-primary" type="submit">
-                  <i className="bi bi-journal-arrow-down me-1" />
-                  Return
-                </button>
-              </div>
-            </form>
+            <div className="col-md-5">
+              <label className="form-label">Book</label>
+              <select className="form-select form-control-modern" value={borrowForm.book_id} onChange={(e) => { setBorrowForm({ ...borrowForm, book_id: e.target.value }); setReturnForm({ ...returnForm, book_id: e.target.value }); }} required>
+                <option value="">Select book</option>
+                {books.map((b) => <option key={b.book_id} value={b.book_id}>{b.book_id} - {b.title}</option>)}
+              </select>
+            </div>
+            <div className="col-12 d-flex gap-2">
+              <button className="btn btn-neon" type="submit"><i className="fa-solid fa-check me-1" />Submit Action</button>
+              <button className="btn btn-soft" type="button" onClick={() => { setBorrowForm({ user_id: '', book_id: '' }); setReturnForm({ user_id: '', book_id: '' }); }}>Reset</button>
+            </div>
+          </form>
+        </div>
+        <div className="glass-panel p-4">
+          <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h2 className="mb-0">Issued / Return Transactions</h2>
+            <div className="d-flex align-items-center gap-2">
+              <input className="form-control form-control-modern" placeholder="Search transactions..." value={query} onChange={(e) => setQuery(e.target.value)} />
+              <span className="badge rounded-pill text-bg-dark-subtle">{filtered.length} Events</span>
+            </div>
+          </div>
+          <div className="table-responsive">
+            <table className="table table-modern align-middle mb-0">
+              <thead><tr><th>ID</th><th>User</th><th>Book</th><th>Type</th><th>Timestamp</th></tr></thead>
+              <tbody>
+                {filtered.length === 0 && <tr><td colSpan={5} className="text-center text-soft py-4">No transactions found.</td></tr>}
+                {filtered.map((txn) => (
+                  <tr key={txn.transaction_id}>
+                    <td>{txn.transaction_id}</td>
+                    <td>{txn.user_id}</td>
+                    <td>{txn.book_id}</td>
+                    <td><span className={`badge ${txn.type === 'borrow' ? 'badge-soft-warning' : 'badge-soft-success'}`}>{txn.type.toUpperCase()}</span></td>
+                    <td>{new Date(txn.timestamp).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      </section>
-
-      <section className="card-elevated p-3 p-md-4">
-        <div className="panel-header">
-          <div>
-            <h3 className="h5 mb-1">Issued and Returned Books</h3>
-            <p className="text-muted mb-0">Search by transaction, user, book, or type.</p>
-          </div>
-          <SearchBar value={query} onChange={setQuery} placeholder="Search by transaction, user, book, or type" />
-        </div>
-        <DataTable columns={columns} rows={filtered} emptyMessage="No transactions match this search." />
-      </section>
+      </div>
     </Layout>
   );
 }

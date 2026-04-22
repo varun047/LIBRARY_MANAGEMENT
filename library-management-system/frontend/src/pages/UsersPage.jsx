@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
-import DataTable from '../components/DataTable';
-import SearchBar from '../components/SearchBar';
-import { fetchUsers, registerUser } from '../lib/api.js';
+import { fetchUsers, registerUser } from '../services/api.js';
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
@@ -56,82 +54,55 @@ export default function UsersPage() {
     );
   }, [users, query]);
 
-  const columns = [
-    { key: 'user_id', label: 'User ID' },
-    { key: 'name', label: 'Name' },
-    {
-      key: 'role',
-      label: 'Role',
-      render: (value) => <span className="badge badge-role rounded-pill">{(value || 'Member').toString()}</span>
-    },
-    { key: 'email', label: 'Email' },
-    { key: 'phone', label: 'Phone' },
-    { key: 'borrowed_books', label: 'Borrowed' },
-    {
-      key: 'outstanding_fines',
-      label: 'Outstanding Fines',
-      render: (value) => `$${Number(value).toFixed(2)}`
-    }
-  ];
-
   return (
-    <Layout title="Users" subtitle="Member records, loans, and pending fines.">
-      {error && <div className="alert alert-danger">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
-
-      <section className="glass-card fluid-card welcome-banner mb-4">
-        <div>
-          <p className="banner-eyebrow mb-2">Student Management</p>
-          <h3 className="banner-title mb-2">Manage Memberships with Confidence</h3>
-          <p className="banner-text mb-0">
-            Register new members, monitor contact records, and keep account details organized in one place.
-          </p>
+    <Layout activePage="users">
+      <div className="container">
+        <div className="glass-panel p-4 mb-4">
+          <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h2 className="mb-0">Register Student</h2>
+            <span className="text-soft">Add new library members directly from this page</span>
+          </div>
+          {success && <div className="alert alert-success">{success}</div>}
+          {error && <div className="alert alert-danger">{error}</div>}
+          <form className="row g-3" onSubmit={handleSubmit}>
+            <div className="col-md-3"><label className="form-label">User ID</label><input className="form-control form-control-modern" value={form.user_id} onChange={(e) => setForm({ ...form, user_id: e.target.value })} required /></div>
+            <div className="col-md-3"><label className="form-label">Full Name</label><input className="form-control form-control-modern" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
+            <div className="col-md-3"><label className="form-label">Email</label><input type="email" className="form-control form-control-modern" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
+            <div className="col-md-3"><label className="form-label">Phone</label><input className="form-control form-control-modern" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required /></div>
+            <div className="col-12 d-flex gap-2">
+              <button className="btn btn-neon" type="submit"><i className="fa-solid fa-user-plus me-1" />Add Student</button>
+              <button className="btn btn-soft" type="button" onClick={() => setForm({ user_id: '', name: '', email: '', phone: '' })}>Reset</button>
+            </div>
+          </form>
         </div>
-        <div className="d-flex align-items-center gap-2 flex-wrap">
-          <span className="badge text-bg-light border">Total Members: {users.length}</span>
-          <span className="badge text-bg-light border">Filtered: {filtered.length}</span>
-        </div>
-      </section>
-
-      <section className="card-elevated p-3 p-md-4 mb-4">
-        <div className="panel-header">
-          <div>
-            <h3 className="h5 mb-1">Register New User</h3>
-            <p className="text-muted mb-0">Create a library profile with contact information.</p>
+        <div className="glass-panel p-4">
+          <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h2 className="mb-0">Students</h2>
+            <div className="d-flex align-items-center gap-2">
+              <input className="form-control form-control-modern" placeholder="Search users..." value={query} onChange={(e) => setQuery(e.target.value)} />
+              <span className="badge rounded-pill text-bg-dark-subtle">{filtered.length} Records</span>
+            </div>
+          </div>
+          <div className="table-responsive">
+            <table className="table table-modern align-middle mb-0">
+              <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Borrowed</th><th>Outstanding Fines</th></tr></thead>
+              <tbody>
+                {filtered.length === 0 && <tr><td colSpan={6} className="text-center text-soft py-4">No students found.</td></tr>}
+                {filtered.map((u) => (
+                  <tr key={u.user_id}>
+                    <td>{u.user_id}</td>
+                    <td>{u.name}</td>
+                    <td>{u.email}</td>
+                    <td>{u.phone}</td>
+                    <td>{u.borrowed_books}</td>
+                    <td>${Number(u.outstanding_fines).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-        <form className="row g-3" onSubmit={handleSubmit}>
-          <div className="col-12 col-md-3">
-            <input className="form-control" placeholder="User ID" value={form.user_id} onChange={(e) => setForm({ ...form, user_id: e.target.value })} required />
-          </div>
-          <div className="col-12 col-md-3">
-            <input className="form-control" placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-          </div>
-          <div className="col-12 col-md-3">
-            <input type="email" className="form-control" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-          </div>
-          <div className="col-12 col-md-3">
-            <input className="form-control" placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
-          </div>
-          <div className="col-12">
-            <button className="btn btn-primary" type="submit">
-              <i className="bi bi-person-plus me-1" />
-              Register User
-            </button>
-          </div>
-        </form>
-      </section>
-
-      <section className="card-elevated p-3 p-md-4">
-        <div className="panel-header">
-          <div>
-            <h3 className="h5 mb-1">Users Directory</h3>
-            <p className="text-muted mb-0">Search members by ID, name, email, or phone.</p>
-          </div>
-          <SearchBar value={query} onChange={setQuery} placeholder="Search by ID, name, email, or phone" />
-        </div>
-        <DataTable columns={columns} rows={filtered} emptyMessage="No users match this search." />
-      </section>
+      </div>
     </Layout>
   );
 }

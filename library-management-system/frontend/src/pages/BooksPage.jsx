@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
-import DataTable from '../components/DataTable';
-import SearchBar from '../components/SearchBar';
-import { addBook, fetchBooks } from '../lib/api.js';
+import { addBook, fetchBooks } from '../services/api.js';
 
 export default function BooksPage() {
   const [books, setBooks] = useState([]);
@@ -73,91 +71,58 @@ export default function BooksPage() {
     );
   }, [books, query]);
 
-  const columns = [
-    { key: 'book_id', label: 'Book ID' },
-    { key: 'title', label: 'Title' },
-    { key: 'author', label: 'Author' },
-    { key: 'isbn', label: 'ISBN' },
-    {
-      key: 'available',
-      label: 'Available',
-      render: (value, row) => {
-        const available = Number(value || 0);
-        const total = Number(row.total || 0);
-        const cls = available > 0 ? 'badge badge-available rounded-pill' : 'badge badge-issued rounded-pill';
-        return <span className={cls}>{available}</span>;
-      }
-    },
-    { key: 'total', label: 'Total' }
-  ];
-
   return (
-    <Layout title="Books" subtitle="Inventory, availability, and title management.">
-      {error && <div className="alert alert-danger">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
-
-      <section className="glass-card fluid-card welcome-banner mb-4">
-        <div>
-          <p className="banner-eyebrow mb-2">Catalog Workspace</p>
-          <h3 className="banner-title mb-2">Build and Manage Your Library Collection</h3>
-          <p className="banner-text mb-0">
-            Add titles, track availability, and maintain a clean searchable catalog for students and staff.
-          </p>
+    <Layout activePage="books">
+      <div className="container">
+        <div className="glass-panel p-4 mb-4">
+          <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h2 className="mb-0">Add New Book</h2>
+            <span className="text-soft">Create inventory records from this page</span>
+          </div>
+          {success && <div className="alert alert-success">{success}</div>}
+          {error && <div className="alert alert-danger">{error}</div>}
+          <form className="row g-3" onSubmit={handleSubmit}>
+            <div className="col-md-4"><label className="form-label">Book ID</label><input className="form-control form-control-modern" value={form.book_id} onChange={(e) => setForm({ ...form, book_id: e.target.value })} required /></div>
+            <div className="col-md-4"><label className="form-label">Title</label><input className="form-control form-control-modern" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></div>
+            <div className="col-md-4"><label className="form-label">Author</label><input className="form-control form-control-modern" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} required /></div>
+            <div className="col-md-4"><label className="form-label">ISBN</label><input className="form-control form-control-modern" value={form.isbn} onChange={(e) => setForm({ ...form, isbn: e.target.value })} required /></div>
+            <div className="col-md-4"><label className="form-label">Publication Year</label><input type="number" className="form-control form-control-modern" value={form.publication_year} onChange={(e) => setForm({ ...form, publication_year: e.target.value })} required /></div>
+            <div className="col-md-2"><label className="form-label">Available</label><input type="number" min="0" className="form-control form-control-modern" value={form.copies_available} onChange={(e) => setForm({ ...form, copies_available: e.target.value })} required /></div>
+            <div className="col-md-2"><label className="form-label">Total</label><input type="number" min="1" className="form-control form-control-modern" value={form.copies_total} onChange={(e) => setForm({ ...form, copies_total: e.target.value })} required /></div>
+            <div className="col-12 d-flex gap-2">
+              <button className="btn btn-neon" type="submit"><i className="fa-solid fa-plus me-1" />Add Book</button>
+              <button className="btn btn-soft" type="button" onClick={() => setForm({ book_id: '', title: '', author: '', isbn: '', publication_year: '', copies_available: '1', copies_total: '1' })}>Reset</button>
+            </div>
+          </form>
         </div>
-        <div className="d-flex align-items-center gap-2 flex-wrap">
-          <span className="badge text-bg-light border">Total Records: {books.length}</span>
-          <span className="badge text-bg-light border">Filtered View: {filtered.length}</span>
-        </div>
-      </section>
-
-      <section className="card-elevated p-3 p-md-4 mb-4">
-        <div className="panel-header">
-          <div>
-            <h3 className="h5 mb-1">Add New Book</h3>
-            <p className="text-muted mb-0">Create a new inventory entry with complete metadata.</p>
+        <div className="glass-panel p-4">
+          <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h2 className="mb-0">Books Inventory</h2>
+            <div className="d-flex align-items-center gap-2">
+              <input className="form-control form-control-modern" placeholder="Search books..." value={query} onChange={(e) => setQuery(e.target.value)} />
+              <span className="badge rounded-pill text-bg-dark-subtle">{filtered.length} Records</span>
+            </div>
+          </div>
+          <div className="table-responsive">
+            <table className="table table-modern align-middle mb-0">
+              <thead><tr><th>ID</th><th>Title</th><th>Author</th><th>ISBN</th><th>Available</th><th>Total</th></tr></thead>
+              <tbody>
+                {filtered.length === 0 && <tr><td colSpan={6} className="text-center text-soft py-4">No books found.</td></tr>}
+                {filtered.map((book) => (
+                  <tr key={book.book_id}>
+                    <td>{book.book_id}</td>
+                    <td>{book.title}</td>
+                    <td>{book.author}</td>
+                    <td>{book.isbn}</td>
+                    <td>{book.available}</td>
+                    <td>{book.total}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-        <form className="row g-3" onSubmit={handleSubmit}>
-          <div className="col-12 col-md-4">
-            <input className="form-control" placeholder="Book ID" value={form.book_id} onChange={(e) => setForm({ ...form, book_id: e.target.value })} required />
-          </div>
-          <div className="col-12 col-md-4">
-            <input className="form-control" placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
-          </div>
-          <div className="col-12 col-md-4">
-            <input className="form-control" placeholder="Author" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} required />
-          </div>
-          <div className="col-12 col-md-4">
-            <input className="form-control" placeholder="ISBN" value={form.isbn} onChange={(e) => setForm({ ...form, isbn: e.target.value })} required />
-          </div>
-          <div className="col-12 col-md-4">
-            <input type="number" className="form-control" placeholder="Publication Year" value={form.publication_year} onChange={(e) => setForm({ ...form, publication_year: e.target.value })} required />
-          </div>
-          <div className="col-6 col-md-2">
-            <input type="number" className="form-control" min="0" placeholder="Available" value={form.copies_available} onChange={(e) => setForm({ ...form, copies_available: e.target.value })} required />
-          </div>
-          <div className="col-6 col-md-2">
-            <input type="number" className="form-control" min="1" placeholder="Total" value={form.copies_total} onChange={(e) => setForm({ ...form, copies_total: e.target.value })} required />
-          </div>
-          <div className="col-12">
-            <button className="btn btn-primary" type="submit">
-              <i className="bi bi-plus-circle me-1" />
-              Add Book
-            </button>
-          </div>
-        </form>
-      </section>
-
-      <section className="card-elevated p-3 p-md-4">
-        <div className="panel-header">
-          <div>
-            <h3 className="h5 mb-1">Books Catalog</h3>
-            <p className="text-muted mb-0">Search by ID, title, author, or ISBN.</p>
-          </div>
-          <SearchBar value={query} onChange={setQuery} placeholder="Search by ID, title, author, or ISBN" />
-        </div>
-        <DataTable columns={columns} rows={filtered} emptyMessage="No books match this search." />
-      </section>
+      </div>
     </Layout>
   );
 }
