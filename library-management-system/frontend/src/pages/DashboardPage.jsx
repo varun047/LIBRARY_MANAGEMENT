@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import StatCard from '../components/StatCard';
 import DataTable from '../components/DataTable';
-import { fetchStatistics, fetchTransactions } from '../lib/api';
+import { fetchStatistics, fetchTransactions } from '../lib/api.js';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState(null);
