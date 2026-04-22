@@ -1,8 +1,45 @@
 const configuredBase = (import.meta.env.VITE_API_BASE_URL || '').trim();
-const API_BASE = configuredBase ? configuredBase.replace(/\/$/, '') : '';
+
+function normalizeApiBase(base) {
+  if (!base) return '';
+
+  const trimmed = base.replace(/\/+$/, '');
+
+  // Keep explicit absolute URLs as-is.
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  // Keep root-relative base paths (e.g. "/api").
+  if (trimmed.startsWith('/')) {
+    return trimmed;
+  }
+
+  // Treat bare host values (e.g. "localhost:5000" or "api.example.com") as absolute.
+  return `http://${trimmed}`;
+}
+
+const API_BASE = normalizeApiBase(configuredBase);
+
+function createUrl(path) {
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+
+  if (!API_BASE) {
+    return path;
+  }
+
+  if (/^https?:\/\//i.test(API_BASE)) {
+    return new URL(path, `${API_BASE}/`).toString();
+  }
+
+  // API_BASE can be a root-relative path, so preserve frontend origin in that case.
+  return `${API_BASE}${path}`;
+}
 
 async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(createUrl(path), {
     credentials: 'include',
     ...options
   });
@@ -68,7 +105,7 @@ export async function loginUser({ identity, password }) {
     next: '/app/dashboard'
   });
 
-  const response = await fetch(`${API_BASE}/login`, {
+  const response = await fetch(createUrl('/login'), {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -92,7 +129,7 @@ export async function loginUser({ identity, password }) {
 }
 
 export async function logoutUser() {
-  await fetch(`${API_BASE}/logout`, {
+  await fetch(createUrl('/logout'), {
     method: 'POST',
     credentials: 'include'
   });
