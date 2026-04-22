@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import SearchBar from '../components/SearchBar';
-import { addBook, fetchBooks } from '../lib/api';
+import { addBook, fetchBooks } from '../lib/api.js';
 
 export default function BooksPage() {
   const [books, setBooks] = useState([]);

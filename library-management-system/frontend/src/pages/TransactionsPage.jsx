@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import SearchBar from '../components/SearchBar';
-import { borrowBook, fetchTransactions, returnBook } from '../lib/api';
+import { borrowBook, fetchTransactions, returnBook } from '../lib/api.js';
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import SearchBar from '../components/SearchBar';
-import { fetchUsers, registerUser } from '../lib/api';
+import { fetchUsers, registerUser } from '../lib/api.js';
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
