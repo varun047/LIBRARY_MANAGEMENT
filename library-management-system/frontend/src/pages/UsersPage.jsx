@@ -59,6 +59,11 @@ export default function UsersPage() {
   const columns = [
     { key: 'user_id', label: 'User ID' },
     { key: 'name', label: 'Name' },
+    {
+      key: 'role',
+      label: 'Role',
+      render: (value) => <span className="badge badge-role rounded-pill">{(value || 'Member').toString()}</span>
+    },
     { key: 'email', label: 'Email' },
     { key: 'phone', label: 'Phone' },
     { key: 'borrowed_books', label: 'Borrowed' },
@@ -74,9 +79,26 @@ export default function UsersPage() {
       {error && <div className="alert alert-danger">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
+      <section className="glass-card fluid-card welcome-banner mb-4">
+        <div>
+          <p className="banner-eyebrow mb-2">Student Management</p>
+          <h3 className="banner-title mb-2">Manage Memberships with Confidence</h3>
+          <p className="banner-text mb-0">
+            Register new members, monitor contact records, and keep account details organized in one place.
+          </p>
+        </div>
+        <div className="d-flex align-items-center gap-2 flex-wrap">
+          <span className="badge text-bg-light border">Total Members: {users.length}</span>
+          <span className="badge text-bg-light border">Filtered: {filtered.length}</span>
+        </div>
+      </section>
+
       <section className="card-elevated p-3 p-md-4 mb-4">
         <div className="panel-header">
-          <h3 className="h5 mb-0">Register New User</h3>
+          <div>
+            <h3 className="h5 mb-1">Register New User</h3>
+            <p className="text-muted mb-0">Create a library profile with contact information.</p>
+          </div>
         </div>
         <form className="row g-3" onSubmit={handleSubmit}>
           <div className="col-12 col-md-3">
@@ -92,14 +114,20 @@ export default function UsersPage() {
             <input className="form-control" placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
           </div>
           <div className="col-12">
-            <button className="btn btn-primary" type="submit">Register User</button>
+            <button className="btn btn-primary" type="submit">
+              <i className="bi bi-person-plus me-1" />
+              Register User
+            </button>
           </div>
         </form>
       </section>
 
       <section className="card-elevated p-3 p-md-4">
         <div className="panel-header">
-          <h3 className="h5 mb-0">Users Directory</h3>
+          <div>
+            <h3 className="h5 mb-1">Users Directory</h3>
+            <p className="text-muted mb-0">Search members by ID, name, email, or phone.</p>
+          </div>
           <SearchBar value={query} onChange={setQuery} placeholder="Search by ID, name, email, or phone" />
         </div>
         <DataTable columns={columns} rows={filtered} emptyMessage="No users match this search." />

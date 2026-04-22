@@ -1,7 +1,34 @@
 document.addEventListener('DOMContentLoaded', () => {
+  initThemeToggle();
   animateCounters();
   wirePasswordToggle();
 });
+
+function initThemeToggle() {
+  const btn = document.querySelector('[data-theme-toggle-btn]');
+  if (!btn) {
+    return;
+  }
+
+  const stored = localStorage.getItem('lms-jinja-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  let theme = stored === 'dark' || stored === 'light' ? stored : (prefersDark ? 'dark' : 'light');
+
+  applyTheme(theme, btn);
+
+  btn.addEventListener('click', () => {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    applyTheme(theme, btn);
+    localStorage.setItem('lms-jinja-theme', theme);
+  });
+}
+
+function applyTheme(theme, btn) {
+  document.documentElement.setAttribute('data-theme', theme);
+  btn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+  btn.setAttribute('title', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+  btn.setAttribute('data-theme-state', theme);
+}
 
 function animateCounters() {
   const counters = document.querySelectorAll('.counter[data-target]');

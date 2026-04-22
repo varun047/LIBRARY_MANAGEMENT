@@ -1,7 +1,8 @@
 """Flask web application for Library Management System."""
 import re
+from functools import wraps
 from pathlib import Path
-from flask import Flask, request, jsonify, send_from_directory, render_template, redirect, url_for
+from flask import Flask, request, jsonify, send_from_directory, render_template, redirect, url_for, session
 from flask_cors import CORS
 from app import LibraryManagementSystem
 
@@ -9,6 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIST = BASE_DIR / 'frontend' / 'dist'
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
+app.config['SECRET_KEY'] = 'librarypro-dev-secret-key'
 CORS(app)
 
 # Initialize the library system
@@ -84,6 +86,30 @@ def validate_registration_form(form: dict) -> str:
     return ''
 
 
+def is_authenticated() -> bool:
+    """Return True if current browser session is authenticated."""
+    return bool(session.get('is_authenticated'))
+
+
+def login_required_page(view_func):
+    """Require an authenticated session for HTML pages."""
+    @wraps(view_func)
+    def wrapper(*args, **kwargs):
+        if not is_authenticated():
+            return redirect(url_for('login_page', next=request.path))
+        return view_func(*args, **kwargs)
+    return wrapper
+
+
+@app.context_processor
+def inject_auth_context():
+    """Expose auth state to all Jinja templates."""
+    return {
+        'is_authenticated': is_authenticated(),
+        'current_identity': session.get('identity', '')
+    }
+
+
 # ===== FLASK PAGES =====
 @app.route('/', methods=['GET'])
 def home_page():
@@ -99,29 +125,164 @@ def home_page():
 
 
 @app.route('/dashboard', methods=['GET'])
+@login_required_page
 def dashboard_page():
     """Render admin dashboard page."""
     return render_template('dashboard.html', **build_dashboard_context())
 
 
-@app.route('/books', methods=['GET'])
+@app.route('/books', methods=['GET', 'POST'])
+@login_required_page
 def books_page():
-    """Render books page."""
+    """Render books page and handle add-book form submissions."""
+    success_message = ''
+    error_message = ''
+
+    if request.method == 'POST':
+        data = get_request_data()
+        required_fields = ['book_id', 'title', 'author', 'isbn', 'publication_year']
+        missing = [field for field in required_fields if not str(data.get(field, '')).strip()]
+
+        if missing:
+            message = f"Missing required fields: {', '.join(missing)}"
+            if request.is_json or prefers_json():
+                return jsonify({'success': False, 'error': message}), 400
+            error_message = message
+        else:
+            try:
+                success = lms.add_book(
+                    str(data['book_id']).strip(),
+                    str(data['title']).strip(),
+                    str(data['author']).strip(),
+                    str(data['isbn']).strip(),
+                    int(data['publication_year']),
+                    int(data.get('copies_available', 1)),
+                    int(data.get('copies_total', 1))
+                )
+
+                if request.is_json or prefers_json():
+                    return jsonify({
+                        'success': success,
+                        'message': 'Book added successfully' if success else 'Book ID already exists'
+                    }, 200 if success else 409)
+
+                if success:
+                    success_message = 'Book added successfully.'
+                else:
+                    error_message = 'Book ID already exists.'
+            except Exception as e:
+                if request.is_json or prefers_json():
+                    return jsonify({'success': False, 'error': str(e)}), 400
+                error_message = str(e)
+
     books = lms.book_manager.get_all_books()
-    return render_template('books.html', books=books)
+    return render_template('books.html', books=books, success_message=success_message, error_message=error_message)
 
 
-@app.route('/users', methods=['GET'])
+@app.route('/users', methods=['GET', 'POST'])
+@login_required_page
 def users_page():
-    """Render users page."""
+    """Render users page and handle user creation."""
+    success_message = ''
+    error_message = ''
+    form_values = {'user_id': '', 'name': '', 'email': '', 'phone': ''}
+
+    if request.method == 'POST':
+        data = get_request_data()
+        form_values = {
+            'user_id': str(data.get('user_id', '')).strip(),
+            'name': str(data.get('name', '')).strip(),
+            'email': str(data.get('email', '')).strip(),
+            'phone': str(data.get('phone', '')).strip(),
+        }
+        validation_error = validate_registration_form(form_values)
+        if validation_error:
+            if request.is_json or prefers_json():
+                return jsonify({'success': False, 'error': validation_error}), 400
+            error_message = validation_error
+        else:
+            try:
+                success = lms.register_user(
+                    form_values['user_id'],
+                    form_values['name'],
+                    form_values['email'],
+                    form_values['phone']
+                )
+                if request.is_json or prefers_json():
+                    return jsonify({
+                        'success': success,
+                        'message': 'User registered successfully' if success else 'User ID already exists'
+                    }, 200 if success else 409)
+                if success:
+                    success_message = 'Student registered successfully.'
+                    form_values = {'user_id': '', 'name': '', 'email': '', 'phone': ''}
+                else:
+                    error_message = 'User ID already exists.'
+            except Exception as e:
+                if request.is_json or prefers_json():
+                    return jsonify({'success': False, 'error': str(e)}), 400
+                error_message = str(e)
+
     users = lms.user_manager.get_all_users()
-    return render_template('users.html', users=users)
+    return render_template(
+        'users.html',
+        users=users,
+        success_message=success_message,
+        error_message=error_message,
+        form_values=form_values
+    )
 
 
-@app.route('/transactions', methods=['GET'])
+@app.route('/transactions', methods=['GET', 'POST'])
+@login_required_page
 def transactions_page():
-    """Render transactions page."""
-    return render_template('transactions.html', transactions=list(reversed(lms.transactions)))
+    """Render transactions page and handle borrow/return actions."""
+    success_message = ''
+    error_message = ''
+    form_values = {'user_id': '', 'book_id': '', 'action': 'borrow'}
+
+    if request.method == 'POST':
+        data = get_request_data()
+        action = str(data.get('action', 'borrow')).strip().lower()
+        user_id = str(data.get('user_id', '')).strip()
+        book_id = str(data.get('book_id', '')).strip()
+        form_values = {'user_id': user_id, 'book_id': book_id, 'action': action}
+
+        if action not in ('borrow', 'return'):
+            message = 'Invalid action. Choose borrow or return.'
+            if request.is_json or prefers_json():
+                return jsonify({'success': False, 'error': message}), 400
+            error_message = message
+        elif not user_id or not book_id:
+            message = 'User ID and Book ID are required.'
+            if request.is_json or prefers_json():
+                return jsonify({'success': False, 'error': message}), 400
+            error_message = message
+        else:
+            success = lms.borrow_book(user_id, book_id) if action == 'borrow' else lms.return_book(user_id, book_id)
+            message = 'Book borrowed successfully.' if action == 'borrow' else 'Book returned successfully.'
+            fail_message = 'Failed to borrow book.' if action == 'borrow' else 'Failed to return book.'
+
+            if request.is_json or prefers_json():
+                return jsonify({'success': success, 'message': message if success else fail_message}), (200 if success else 400)
+
+            if success:
+                success_message = message
+                form_values = {'user_id': '', 'book_id': '', 'action': action}
+            else:
+                error_message = fail_message
+
+    users = lms.user_manager.get_all_users()
+    books = lms.book_manager.get_all_books()
+    return render_template(
+        'transactions.html',
+        transactions=list(reversed(lms.transactions)),
+        success_message=success_message,
+        error_message=error_message,
+        form_values=form_values,
+        users=users,
+        books=books
+    )
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -165,7 +326,6 @@ def register_page():
 
 # ===== BOOK ENDPOINTS =====
 @app.route('/api/books', methods=['POST'])
-@app.route('/books', methods=['POST'])
 def add_book():
     """Add a new book."""
     try:
@@ -259,7 +419,6 @@ def delete_book(book_id):
 
 # ===== USER ENDPOINTS =====
 @app.route('/api/users', methods=['POST'])
-@app.route('/users', methods=['POST'])
 def register_user():
     """Register a new user."""
     try:
@@ -397,9 +556,12 @@ def login_page():
     error_message = ''
     identity_value = ''
 
+    next_path = request.args.get('next', '/dashboard')
+
     if request.method == 'POST':
         identity = request.form.get('identity', '').strip()
         password = request.form.get('password', '').strip()
+        next_path = request.form.get('next', '/dashboard')
         identity_value = identity
 
         if not identity or not password:
@@ -407,10 +569,25 @@ def login_page():
         elif len(password) < 4:
             error_message = 'Password must be at least 4 characters.'
         else:
-            # Placeholder authentication flow; replace with real auth later.
-            return redirect(url_for('dashboard_page'))
+            session['is_authenticated'] = True
+            session['identity'] = identity
+            if not next_path.startswith('/'):
+                next_path = '/dashboard'
+            return redirect(next_path)
 
-    return render_template('login.html', error_message=error_message, identity_value=identity_value)
+    return render_template(
+        'login.html',
+        error_message=error_message,
+        identity_value=identity_value,
+        next_path=next_path
+    )
+
+
+@app.route('/logout', methods=['POST'])
+def logout_page():
+    """Clear auth session and return to home."""
+    session.clear()
+    return redirect(url_for('home_page'))
 
 
 @app.route('/app', defaults={'path': ''})

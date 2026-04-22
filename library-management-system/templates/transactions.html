@@ -4,6 +4,52 @@
 
 {% block content %}
 <div class="container">
+    <div class="glass-panel p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h2 class="mb-0">Issue / Return Book</h2>
+            <span class="text-soft">Perform circulation actions directly from this page</span>
+        </div>
+
+        {% if success_message %}
+        <div class="alert alert-success">{{ success_message }}</div>
+        {% endif %}
+        {% if error_message %}
+        <div class="alert alert-danger">{{ error_message }}</div>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('transactions_page') }}" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Action</label>
+                <select class="form-select form-control-modern" name="action" required>
+                    <option value="borrow" {% if form_values and form_values.action == 'borrow' %}selected{% endif %}>Borrow</option>
+                    <option value="return" {% if form_values and form_values.action == 'return' %}selected{% endif %}>Return</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Student</label>
+                <select class="form-select form-control-modern" name="user_id" required>
+                    <option value="">Select student</option>
+                    {% for user in users %}
+                    <option value="{{ user.user_id }}" {% if form_values and form_values.user_id == user.user_id %}selected{% endif %}>{{ user.user_id }} - {{ user.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">Book</label>
+                <select class="form-select form-control-modern" name="book_id" required>
+                    <option value="">Select book</option>
+                    {% for book in books %}
+                    <option value="{{ book.book_id }}" {% if form_values and form_values.book_id == book.book_id %}selected{% endif %}>{{ book.book_id }} - {{ book.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 d-flex gap-2">
+                <button class="btn btn-neon" type="submit"><i class="fa-solid fa-check me-1"></i>Submit Action</button>
+                <a href="{{ url_for('transactions_page') }}" class="btn btn-soft">Reset</a>
+            </div>
+        </form>
+    </div>
+
     <div class="glass-panel p-4">
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h2 class="mb-0">Issued / Return Transactions</h2>

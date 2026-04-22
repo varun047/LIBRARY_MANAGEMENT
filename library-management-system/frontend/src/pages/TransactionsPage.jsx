@@ -89,11 +89,28 @@ export default function TransactionsPage() {
       {error && <div className="alert alert-danger">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
+      <section className="glass-card fluid-card welcome-banner mb-4">
+        <div>
+          <p className="banner-eyebrow mb-2">Circulation Operations</p>
+          <h3 className="banner-title mb-2">Track Every Borrow and Return</h3>
+          <p className="banner-text mb-0">
+            Process issue/return operations instantly and maintain a reliable activity timeline.
+          </p>
+        </div>
+        <div className="d-flex align-items-center gap-2 flex-wrap">
+          <span className="badge text-bg-light border">Total Transactions: {transactions.length}</span>
+          <span className="badge text-bg-light border">Filtered: {filtered.length}</span>
+        </div>
+      </section>
+
       <section className="row g-3 mb-4">
         <div className="col-12 col-lg-6">
           <div className="card-elevated p-3 p-md-4 h-100">
             <div className="panel-header">
-              <h3 className="h5 mb-0">Borrow Book</h3>
+              <div>
+                <h3 className="h5 mb-1">Borrow Book</h3>
+                <p className="text-muted mb-0">Issue a book to a registered user.</p>
+              </div>
             </div>
             <form className="row g-3" onSubmit={handleBorrow}>
               <div className="col-12">
@@ -103,7 +120,10 @@ export default function TransactionsPage() {
                 <input className="form-control" placeholder="Book ID" value={borrowForm.book_id} onChange={(e) => setBorrowForm({ ...borrowForm, book_id: e.target.value })} required />
               </div>
               <div className="col-12">
-                <button className="btn btn-primary" type="submit">Borrow</button>
+                <button className="btn btn-primary" type="submit">
+                  <i className="bi bi-journal-arrow-up me-1" />
+                  Borrow
+                </button>
               </div>
             </form>
           </div>
@@ -111,7 +131,10 @@ export default function TransactionsPage() {
         <div className="col-12 col-lg-6">
           <div className="card-elevated p-3 p-md-4 h-100">
             <div className="panel-header">
-              <h3 className="h5 mb-0">Return Book</h3>
+              <div>
+                <h3 className="h5 mb-1">Return Book</h3>
+                <p className="text-muted mb-0">Complete return flow for issued books.</p>
+              </div>
             </div>
             <form className="row g-3" onSubmit={handleReturn}>
               <div className="col-12">
@@ -121,7 +144,10 @@ export default function TransactionsPage() {
                 <input className="form-control" placeholder="Book ID" value={returnForm.book_id} onChange={(e) => setReturnForm({ ...returnForm, book_id: e.target.value })} required />
               </div>
               <div className="col-12">
-                <button className="btn btn-primary" type="submit">Return</button>
+                <button className="btn btn-primary" type="submit">
+                  <i className="bi bi-journal-arrow-down me-1" />
+                  Return
+                </button>
               </div>
             </form>
           </div>
@@ -130,7 +156,10 @@ export default function TransactionsPage() {
 
       <section className="card-elevated p-3 p-md-4">
         <div className="panel-header">
-          <h3 className="h5 mb-0">Issued and Returned Books</h3>
+          <div>
+            <h3 className="h5 mb-1">Issued and Returned Books</h3>
+            <p className="text-muted mb-0">Search by transaction, user, book, or type.</p>
+          </div>
           <SearchBar value={query} onChange={setQuery} placeholder="Search by transaction, user, book, or type" />
         </div>
         <DataTable columns={columns} rows={filtered} emptyMessage="No transactions match this search." />

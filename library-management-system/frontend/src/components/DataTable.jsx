@@ -12,8 +12,11 @@ export default function DataTable({ columns, rows, emptyMessage = 'No records fo
         <tbody>
           {rows.length === 0 && (
             <tr>
-              <td colSpan={columns.length} className="text-center text-muted py-4">
-                {emptyMessage}
+              <td colSpan={columns.length} className="p-4">
+                <div className="empty-state-card">
+                  <i className="bi bi-inbox fs-4 d-block mb-2" />
+                  <div>{emptyMessage}</div>
+                </div>
               </td>
             </tr>
           )}

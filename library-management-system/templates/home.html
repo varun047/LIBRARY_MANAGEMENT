@@ -11,9 +11,14 @@
                 <h1 class="display-5 fw-bold mb-3 hero-title">Manage Your Library With Premium Simplicity</h1>
                 <p class="lead text-soft mb-4">Track books, issued records, student registrations, and overdue activity through a professional dashboard designed for modern institutions.</p>
                 <div class="d-flex flex-wrap gap-2">
+                    {% if is_authenticated %}
+                    <a class="btn btn-neon btn-lg" href="{{ url_for('dashboard_page') }}"><i class="fa-solid fa-chart-line me-2"></i>Go to Dashboard</a>
+                    <a class="btn btn-soft btn-lg" href="{{ url_for('books_page') }}"><i class="fa-solid fa-book me-2"></i>Manage Books</a>
+                    {% else %}
                     <a class="btn btn-neon btn-lg" href="{{ url_for('login_page') }}"><i class="fa-solid fa-right-to-bracket me-2"></i>Login</a>
                     <a class="btn btn-outline-light btn-lg" href="{{ url_for('register_page') }}"><i class="fa-solid fa-user-plus me-2"></i>Register</a>
                     <a class="btn btn-soft btn-lg" href="{{ url_for('dashboard_page') }}"><i class="fa-solid fa-chart-line me-2"></i>View Dashboard</a>
+                    {% endif %}
                 </div>
             </div>
             <div class="col-lg-5">
@@ -34,28 +39,28 @@
 <section class="container mb-4">
     <div class="row g-3">
         <div class="col-md-6 col-xl-3">
-            <div class="glass-panel h-100 p-4">
+            <div class="showcase-card pastel-mint h-100 p-4">
                 <i class="fa-solid fa-book icon-chip mb-3"></i>
                 <h5>Book Inventory</h5>
                 <p class="text-soft mb-0">Track availability and catalog details in real time.</p>
             </div>
         </div>
         <div class="col-md-6 col-xl-3">
-            <div class="glass-panel h-100 p-4">
+            <div class="showcase-card pastel-sky h-100 p-4">
                 <i class="fa-solid fa-arrow-right-arrow-left icon-chip mb-3"></i>
                 <h5>Issue & Return</h5>
                 <p class="text-soft mb-0">Manage circulation flow with quick and clear actions.</p>
             </div>
         </div>
         <div class="col-md-6 col-xl-3">
-            <div class="glass-panel h-100 p-4">
+            <div class="showcase-card pastel-lavender h-100 p-4">
                 <i class="fa-solid fa-user-graduate icon-chip mb-3"></i>
                 <h5>Student Records</h5>
                 <p class="text-soft mb-0">Maintain member data and borrowing insights efficiently.</p>
             </div>
         </div>
         <div class="col-md-6 col-xl-3">
-            <div class="glass-panel h-100 p-4">
+            <div class="showcase-card pastel-peach h-100 p-4">
                 <i class="fa-solid fa-clock icon-chip mb-3"></i>
                 <h5>Overdue Alerts</h5>
                 <p class="text-soft mb-0">Surface delays early and improve return compliance.</p>

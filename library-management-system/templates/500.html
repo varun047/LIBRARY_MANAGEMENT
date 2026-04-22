@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error | LibraryPro{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="glass-panel p-5 text-center">
+        <h1 class="display-5 mb-2">500</h1>
+        <p class="text-soft mb-4">Something went wrong on the server. Please try again.</p>
+        <a class="btn btn-neon" href="{{ url_for('home_page') }}">Back to Home</a>
+    </div>
+</div>
+{% endblock %}

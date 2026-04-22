@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import StatCard from '../components/StatCard';
 import DataTable from '../components/DataTable';
@@ -38,6 +39,26 @@ export default function DashboardPage() {
     <Layout title="Dashboard" subtitle="Overview of books, users, and active circulation.">
       {error && <div className="alert alert-danger">{error}</div>}
 
+      <section className="glass-card fluid-card welcome-banner mb-4">
+        <div>
+          <p className="banner-eyebrow mb-2">Welcome Back, Admin</p>
+          <h3 className="banner-title mb-2">Library Operations at a Glance</h3>
+          <p className="banner-text mb-0">
+            Manage resources, monitor circulation, and keep your institution running smoothly.
+          </p>
+        </div>
+        <div className="banner-actions">
+          <Link className="btn btn-primary" to="/books">
+            <i className="bi bi-plus-circle me-1" />
+            Add New Book
+          </Link>
+          <Link className="btn btn-light" to="/transactions">
+            <i className="bi bi-arrow-left-right me-1" />
+            Track Transactions
+          </Link>
+        </div>
+      </section>
+
       <div className="row g-3 mb-4">
         <div className="col-12 col-sm-6 col-xl-3">
           <StatCard icon="bi-collection" label="Unique Books" value={stats?.total_books_unique ?? '--'} />
@@ -55,7 +76,13 @@ export default function DashboardPage() {
 
       <section className="card-elevated p-3 p-md-4">
         <div className="panel-header">
-          <h3 className="h5 mb-0">Recent Issued/Returned Activity</h3>
+          <div>
+            <h3 className="h5 mb-1">Recent Issued/Returned Activity</h3>
+            <p className="text-muted mb-0">Latest transaction entries from your Flask backend</p>
+          </div>
+          <Link className="btn btn-sm btn-outline-primary" to="/transactions">
+            View All
+          </Link>
         </div>
         <DataTable columns={columns} rows={transactions} emptyMessage="No transaction data yet." />
       </section>
